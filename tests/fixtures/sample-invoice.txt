@@ -1,0 +1,24 @@
+INVOICE
+
+Invoice Number: INV-2024-001
+Date: January 15, 2024
+
+Bill To:
+John Doe
+123 Main Street
+New York, NY 10001
+Email: john.doe@example.com
+
+Items:
+1. Web Development Services - $2,500.00
+2. UI/UX Design - $1,500.00
+3. Consultation Hours (10 hrs @ $150/hr) - $1,500.00
+
+Subtotal: $5,500.00
+Tax (8%): $440.00
+Total Amount Due: $5,940.00
+
+Payment Terms: Net 30
+Due Date: February 14, 2024
+
+Thank you for your business!
