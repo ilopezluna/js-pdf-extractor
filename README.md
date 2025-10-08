@@ -1,12 +1,12 @@
 # PDF Data Extractor
 
-A TypeScript library to extract structured data from PDF files using JSON schemas and OpenAI's API.
+A TypeScript library to extract structured data from PDFs using JSON schemas and OpenAI API compatible models.
 
 ## Features
 
 - 📄 Parse PDF files and extract text content
 - 🤖 Use OpenAI's structured output to extract data matching your schema
-- 🔧 Configurable OpenAI base URL and model
+- 🔧 Configurable OpenAI API compatible base URL and model
 - 📝 TypeScript support with full type definitions
 - ✅ Comprehensive test coverage
 
@@ -62,6 +62,17 @@ console.log(result.data);
 //   totalAmount: 5940.00,
 //   items: [...]
 // }
+```
+You can also use local models or other OpenAI-compatible APIs by specifying the `baseUrl` and `model` in the constructor.
+```typescript
+import { PdfDataExtractor } from 'pdf-data-extractor';
+
+// Initialize the extractor
+const extractor = new PdfDataExtractor({
+    openaiApiKey: 'not-required-for-local-models',
+    model: 'ai/gpt-oss',
+    baseUrl: 'http://localhost:12434/engines/v1',
+});
 ```
 
 ## API Reference
@@ -298,8 +309,8 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit [a Pull Request](https://github.com/ilopezluna/js-pdf-extractor).
 
 ## Support
 
-For issues and questions, please open an issue on GitHub.
+For issues and questions, please open an issue [on GitHub](https://github.com/ilopezluna/js-pdf-extractor/issues).
