@@ -9,7 +9,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run build"
   },
   "keywords": [
     "pdf",
@@ -18,8 +19,22 @@
     "json-schema",
     "typescript"
   ],
-  "author": "",
+  "author": "Ignacio López Luna <ignasi.lopez.luna@gmail.com>",
+  "homepage": "https://github.com/ilopezluna/js-pdf-extractor",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ilopezluna/js-pdf-extractor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ilopezluna/js-pdf-extractor/issues"
+  },
   "license": "MIT",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "USAGE.md"
+  ],
   "devDependencies": {
     "@types/jest": "^29.5.11",
     "@types/node": "^20.10.6",

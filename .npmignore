@@ -1,0 +1,39 @@
+# Source files (compiled versions in dist/)
+src/
+tsconfig.json
+
+# Tests
+tests/
+jest.config.js
+coverage/
+
+# Development files
+example.ts
+.nvmrc
+
+# Scripts
+scripts/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Lock files (users should generate their own)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build artifacts that shouldn't be in npm
+*.tsbuildinfo
