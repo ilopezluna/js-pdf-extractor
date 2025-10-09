@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import pdfParse from 'pdf-parse';
+import { pdf } from 'pdf-parse';
 import { ParsedPdf } from './types';
 
 /**
@@ -26,11 +26,11 @@ export async function parsePdfFromPath(pdfPath: string): Promise<ParsedPdf> {
  */
 export async function parsePdfFromBuffer(buffer: Buffer): Promise<ParsedPdf> {
   try {
-    const data = await pdfParse(buffer);
+    const data = await pdf(buffer);
     
     return {
       text: data.text,
-      numPages: data.numpages,
+      numPages: data.pages.length,
       info: data.info,
     };
   } catch (error) {
