@@ -2,13 +2,20 @@
   "name": "pdf-data-extractor",
   "version": "1.0.1",
   "description": "A TypeScript library to extract structured data from PDFs using JSON schemas and OpenAI API compatible models.",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
-    "test": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest",
-    "test:watch": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --watch",
-    "test:coverage": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --coverage",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run build"
   },
@@ -47,6 +54,7 @@
     "ajv": "^8.17.1",
     "openai": "^6.2.0",
     "pdf-parse": "^2.2.2",
+    "pdf-to-img": "^5.0.0",
     "zod": "^4.1.12"
   }
 }

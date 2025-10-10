@@ -1,8 +1,22 @@
-module.exports = {
-  preset: 'ts-jest',
+export default {
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
   testMatch: ['**/*.test.ts'],
+  extensionsToTreatAsEsm: ['.ts'],
+  // Map only relative imports ending in .js to their TypeScript sources
+  // This prevents interfering with actual .js files from node_modules
+  moduleNameMapper: {
+    '^(\\.{1,2}/.+)\\.js$': '$1',
+  },
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+      },
+    ],
+  },
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',

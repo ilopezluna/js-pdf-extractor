@@ -1,4 +1,4 @@
-import { validateSchema, formatSchemaForOpenAI, getValidationErrors } from '../src/schema-validator';
+import { validateSchema, formatSchemaForOpenAI, getValidationErrors } from '../src/schema-validator.js';
 
 describe('Schema Validator', () => {
   describe('validateSchema', () => {
