@@ -40,24 +40,6 @@ export class PdfDataExtractor {
   }
 
   /**
-   * Check if the current model supports vision capabilities
-   * @returns True if model supports vision
-   */
-  private isVisionCapableModel(): boolean {
-    const visionModels = [
-      'gpt-4o',
-      'gpt-4o-mini',
-      'gpt-4-turbo',
-      'gpt-4-vision-preview',
-      'claude-3-5-sonnet',
-      'claude-3-opus',
-      'gemini-1.5-pro',
-    ];
-    const modelLower = this.model.toLowerCase();
-    return visionModels.some(vm => modelLower.includes(vm.toLowerCase()));
-  }
-
-  /**
    * Extract structured data from text content
    * @param text - Text content from PDF
    * @param schema - Formatted schema for OpenAI
@@ -122,13 +104,6 @@ export class PdfDataExtractor {
     // Verify vision is enabled
     if (this.config.visionEnabled === false) {
       throw new Error('PDF contains no extractable text and vision mode is disabled');
-    }
-
-    // Verify model supports vision
-    if (!this.isVisionCapableModel()) {
-      throw new Error(
-        `Model '${this.model}' does not support vision. Please use a vision-capable model like gpt-4o or gpt-4o-mini for scanned PDFs.`
-      );
     }
 
     // Build vision API messages
