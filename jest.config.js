@@ -9,4 +9,8 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
+  // Allow Jest to handle ESM modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(pdf-to-img|pdfjs-dist)/)',
+  ],
 };

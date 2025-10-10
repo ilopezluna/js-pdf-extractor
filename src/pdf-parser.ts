@@ -2,11 +2,10 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { pdf } from 'pdf-parse';
-import { fromPath } from 'pdf2pic';
 import { ParsedPdf, PdfPageImage } from './types';
 
 /**
- * Convert PDF to images using pdf2pic
+ * Convert PDF to images using pdf-to-img
  * @param pdfSource - Path to PDF or Buffer
  * @returns Array of page images as base64 strings
  */
@@ -14,93 +13,40 @@ async function convertPdfToImages(pdfSource: string | Buffer): Promise<PdfPageIm
   let tempFilePath: string | null = null;
   
   try {
-    let pdfPath: string;
+    // Dynamic import of ESM module (pdf-to-img is ESM-only)
+    // Use eval to prevent Jest from transforming the import statement
+    const importPdfToImg = new Function('moduleName', 'return import(moduleName)');
+    const { pdf: pdfToImg } = await importPdfToImg('pdf-to-img');
+    
+    let pdfInput: string | Buffer;
 
-    // If Buffer, write to temp file asynchronously
+    // If Buffer, write to temp file since pdf-to-img works better with file paths
     if (Buffer.isBuffer(pdfSource)) {
       const tempDir = os.tmpdir();
       tempFilePath = path.join(tempDir, `temp-pdf-${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`);
       await fs.promises.writeFile(tempFilePath, pdfSource);
-      pdfPath = tempFilePath;
+      pdfInput = tempFilePath;
     } else {
-      pdfPath = pdfSource;
+      pdfInput = pdfSource;
     }
 
-    // Get number of pages first using async read
-    const dataBuffer = await fs.promises.readFile(pdfPath);
-    const pdfData = await pdf(dataBuffer);
-    const numPages = pdfData.pages.length;
-
-    if (numPages === 0) {
-      throw new Error('PDF contains no pages');
-    }
-
-    // Convert all pages to images
-    const converter = fromPath(pdfPath, {
-      density: 200,
-      saveFilename: 'page',
-      savePath: os.tmpdir(),
-      format: 'png',
-      width: 2000,
-      height: 2000,
-    });
-
-    const images: PdfPageImage[] = [];
-    const conversionErrors: Array<{ page: number; error: string }> = [];
+    // Convert PDF to images with scale factor for quality
+    const document = await pdfToImg(pdfInput, { scale: 3 });
     
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-      try {
-        const result = await converter(pageNum, { responseType: 'base64' });
-        if (result && result.base64) {
-          images.push({
-            page: pageNum,
-            base64: result.base64,
-          });
-        } else {
-          conversionErrors.push({
-            page: pageNum,
-            error: 'Conversion returned empty result',
-          });
-        }
-      } catch (error) {
-        conversionErrors.push({
-          page: pageNum,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
+    const images: PdfPageImage[] = [];
+    let pageNum = 1;
+    
+    // Iterate through all pages
+    for await (const imageBuffer of document) {
+      images.push({
+        page: pageNum,
+        base64: imageBuffer.toString('base64'),
+      });
+      pageNum++;
     }
 
-    // Validate conversion results
     if (images.length === 0) {
-      const errorDetails = conversionErrors.map(e => `page ${e.page}: ${e.error}`).join('; ');
-      // Check if errors suggest missing system dependencies
-      const hasDependencyErrors = conversionErrors.some(e => 
-        e.error.toLowerCase().includes('graphicsmagick') ||
-        e.error.toLowerCase().includes('gm') ||
-        e.error.toLowerCase().includes('poppler') ||
-        e.error.toLowerCase().includes('command not found') ||
-        e.error.includes('Conversion returned empty result')
-      );
-      
-      if (hasDependencyErrors) {
-        // Log warning but return empty array - system dependencies may not be installed
-        console.warn(
-          `Warning: PDF to image conversion failed (likely missing system dependencies like GraphicsMagick or Poppler). ` +
-          `Returning empty images array. Install required dependencies for scanned PDF support. Errors: ${errorDetails}`
-        );
-        return images; // Return empty array
-      } else {
-        // Throw for other unexpected errors
-        throw new Error(`Failed to convert any PDF pages to images. Errors: ${errorDetails}`);
-      }
-    }
-
-    // Warn about partial conversions
-    if (images.length < numPages) {
-      const errorDetails = conversionErrors.map(e => `page ${e.page}: ${e.error}`).join('; ');
-      console.warn(
-        `Partial PDF conversion: ${images.length}/${numPages} pages converted successfully. Failed pages: ${errorDetails}`
-      );
+      throw new Error('PDF conversion produced no images');
     }
 
     return images;
