@@ -5,6 +5,7 @@ A TypeScript library to extract structured data from PDFs using JSON schemas and
 ## Features
 
 - 📄 Parse PDF files and extract text content
+- 🖼️ **Automatic OCR for scanned PDFs** using AI vision models (GPT-4o, Claude, etc.)
 - 🤖 Use OpenAI's structured output to extract data matching your schema
 - 🔧 Configurable OpenAI API compatible base URL and model
 - 📝 TypeScript support with full type definitions
@@ -91,6 +92,8 @@ new PdfDataExtractor(config: ExtractorConfig)
 - `config.openaiApiKey` (string, required): Your OpenAI API key
 - `config.model` (string, optional): Model to use (default: 'gpt-4o-mini')
 - `config.baseUrl` (string, optional): Custom OpenAI API base URL
+- `config.visionEnabled` (boolean, optional): Enable automatic vision-based OCR for scanned PDFs (default: true)
+- `config.textThreshold` (number, optional): Minimum text length to consider PDF as text-based (default: 100)
 
 #### Methods
 
@@ -150,6 +153,90 @@ Validate that a JSON schema is properly formatted.
 #### formatSchemaForOpenAI(schema: Record<string, any>): Record<string, any>
 
 Convert a JSON schema to OpenAI function calling format.
+
+## Scanned PDF Support
+
+This library automatically detects and handles scanned PDFs (documents that are images) using AI vision models. When a PDF contains insufficient extractable text, it automatically:
+
+1. Converts PDF pages to images
+2. Uses a vision-capable AI model (e.g., GPT-4o) to read the images
+3. Extracts structured data just like with text-based PDFs
+
+### How It Works
+
+```typescript
+const extractor = new PdfDataExtractor({
+  openaiApiKey: 'your-api-key',
+  model: 'gpt-4o-mini', // Vision-capable model
+  visionEnabled: true, // Default: true
+  textThreshold: 100, // Minimum text length to consider as text-based
+});
+
+// Works with both text-based and scanned PDFs!
+const result = await extractor.extract({
+  pdfPath: './scanned-invoice.pdf', // Can be a scan
+  schema: {
+    invoiceNumber: { type: 'string' },
+    total: { type: 'number' },
+  },
+});
+```
+
+### Vision-Capable Models
+
+The following models support vision and can process scanned PDFs:
+- `gpt-4o` (recommended)
+- `gpt-4o-mini` (default, cost-effective)
+- `gpt-4-turbo`
+- `gpt-4-vision-preview`
+- `claude-3-5-sonnet`
+- `claude-3-opus`
+- `gemini-1.5-pro`
+
+### Configuration Options
+
+```typescript
+const extractor = new PdfDataExtractor({
+  openaiApiKey: 'your-api-key',
+  model: 'gpt-4o-mini',
+  
+  // Enable/disable automatic vision processing
+  visionEnabled: true, // default: true
+  
+  // Minimum text length to consider PDF as text-based
+  // PDFs with less text will be processed as images
+  textThreshold: 100, // default: 100 characters
+});
+```
+
+### Disabling Vision Support
+
+If you want to only process text-based PDFs and reject scanned documents:
+
+```typescript
+const extractor = new PdfDataExtractor({
+  openaiApiKey: 'your-api-key',
+  visionEnabled: false, // Disable vision processing
+});
+
+// This will throw an error if PDF is scanned
+try {
+  await extractor.extract({
+    pdfPath: './scanned-document.pdf',
+    schema: { /* ... */ },
+  });
+} catch (error) {
+  // Error: "PDF contains no extractable text and vision mode is disabled"
+}
+```
+
+### Cost Considerations
+
+Vision API calls cost more than text-only processing:
+- **Text-based PDFs**: ~$0.15 per 1M tokens (using GPT-4o-mini)
+- **Scanned PDFs**: ~$0.15 per 1M tokens + image tokens (varies by page size)
+
+A typical scanned invoice (1 page) costs approximately $0.01-0.03 with GPT-4o-mini.
 
 ## Advanced Usage
 
@@ -254,7 +341,9 @@ try {
 - **"Either pdfPath or pdfBuffer must be provided"**: Provide either a file path or buffer
 - **"Invalid JSON schema provided"**: Ensure your schema is a non-empty object
 - **"Failed to parse PDF"**: The PDF file may be corrupted or in an unsupported format
-- **"No text content found in PDF"**: The PDF may be image-based or empty
+- **"PDF contains no extractable text and vision mode is disabled"**: The PDF is scanned/image-based but vision processing is disabled
+- **"Model 'X' does not support vision"**: Use a vision-capable model (e.g., gpt-4o, gpt-4o-mini) for scanned PDFs
+- **"Failed to convert PDF to images"**: Issue converting scanned PDF to images (check PDF integrity)
 
 ## TypeScript Support
 

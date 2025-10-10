@@ -8,6 +8,10 @@ export interface ExtractorConfig {
   baseUrl?: string;
   /** Optional model to use (default: gpt-4o-mini) */
   model?: string;
+  /** Enable automatic vision-based OCR for scanned PDFs (default: true) */
+  visionEnabled?: boolean;
+  /** Minimum text length to consider PDF as text-based (default: 100) */
+  textThreshold?: number;
 }
 
 /**
@@ -27,11 +31,28 @@ export interface ExtractionOptions {
 }
 
 /**
+ * Image representation of a PDF page
+ */
+export interface PdfPageImage {
+  /** Page number (1-indexed) */
+  page: number;
+  /** Base64-encoded PNG image */
+  base64: string;
+}
+
+/**
+ * Content extracted from a PDF
+ */
+export type ParsedPdfContent =
+  | { type: 'text'; content: string }
+  | { type: 'images'; content: PdfPageImage[] };
+
+/**
  * Result of PDF parsing
  */
 export interface ParsedPdf {
-  /** Extracted text content from the PDF */
-  text: string;
+  /** Extracted content from the PDF (either text or images) */
+  content: ParsedPdfContent;
   /** Number of pages in the PDF */
   numPages: number;
   /** Metadata from the PDF */
