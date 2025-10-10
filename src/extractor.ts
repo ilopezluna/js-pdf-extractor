@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
-import { parsePdfFromPath, parsePdfFromBuffer } from './pdf-parser';
-import { validateSchema, formatSchemaForOpenAI } from './schema-validator';
-import { ExtractorConfig, ExtractionOptions, ExtractionResult, PdfPageImage } from './types';
+import { parsePdfFromPath, parsePdfFromBuffer } from './pdf-parser.js';
+import { validateSchema, formatSchemaForOpenAI } from './schema-validator.js';
+import { ExtractorConfig, ExtractionOptions, ExtractionResult, PdfPageImage } from './types.js';
 
 /**
  * Main class for extracting structured data from PDFs using OpenAI

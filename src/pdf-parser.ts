@@ -2,7 +2,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { pdf } from 'pdf-parse';
-import { ParsedPdf, PdfPageImage } from './types';
+import { pdf as pdfToImg } from 'pdf-to-img';
+import { ParsedPdf, PdfPageImage } from './types.js';
 
 /**
  * Convert PDF to images using pdf-to-img
@@ -13,10 +14,6 @@ async function convertPdfToImages(pdfSource: string | Buffer): Promise<PdfPageIm
   let tempFilePath: string | null = null;
   
   try {
-    // Dynamic import of ESM module (pdf-to-img is ESM-only)
-    // Use eval to prevent Jest from transforming the import statement
-    const importPdfToImg = new Function('moduleName', 'return import(moduleName)');
-    const { pdf: pdfToImg } = await importPdfToImg('pdf-to-img');
     
     let pdfInput: string | Buffer;
 

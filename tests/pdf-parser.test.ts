@@ -1,6 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { parsePdfFromPath, parsePdfFromBuffer, validatePdf } from '../src/pdf-parser';
+import { fileURLToPath } from 'url';
+import { parsePdfFromPath, parsePdfFromBuffer, validatePdf } from '../src/pdf-parser.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe('PDF Parser', () => {
   const testPdfPath = path.join(__dirname, 'fixtures', 'sample-invoice.pdf');

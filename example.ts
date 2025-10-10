@@ -8,7 +8,7 @@ async function main() {
   // Initialize the extractor with your OpenAI API key
   const extractor = new PdfDataExtractor({
     openaiApiKey: process.env.OPENAI_API_KEY || 'your-api-key-here',
-    model: 'gpt-4o-mini', // Optional: specify the model
+    //model: 'gpt-4o-mini', // Optional: specify the model
     // baseUrl: 'https://api.openai.com/v1', // Optional: custom endpoint
   });
 
