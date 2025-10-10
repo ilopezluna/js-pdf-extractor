@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { pdf } from 'pdf-parse';
-import { pdf as pdfToImg } from 'pdf-to-img';
+import { pdf as pdfToImgConverter } from 'pdf-to-img';
 import { ParsedPdf, PdfPageImage } from './types.js';
 
 /**
@@ -28,7 +28,7 @@ async function convertPdfToImages(pdfSource: string | Buffer): Promise<PdfPageIm
     }
 
     // Convert PDF to images with scale factor for quality
-    const document = await pdfToImg(pdfInput, { scale: 3 });
+    const document = await pdfToImgConverter(pdfInput, { scale: 3 });
     
     const images: PdfPageImage[] = [];
     let pageNum = 1;
