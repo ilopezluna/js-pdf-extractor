@@ -6,8 +6,12 @@ export interface ExtractorConfig {
   openaiApiKey: string;
   /** Optional custom base URL for OpenAI API */
   baseUrl?: string;
-  /** Optional model to use (default: gpt-4o-mini) */
+  /** Optional model to use for both text and vision extraction (default: gpt-4o-mini) */
   model?: string;
+  /** Optional model to use specifically for text-based PDF extraction */
+  textModel?: string;
+  /** Optional model to use specifically for vision-based PDF extraction (OCR) */
+  visionModel?: string;
   /** Enable automatic vision-based OCR for scanned PDFs (default: true) */
   visionEnabled?: boolean;
   /** Minimum text length to consider PDF as text-based (default: 100) */

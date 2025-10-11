@@ -9,6 +9,8 @@ import { ExtractorConfig, ExtractionOptions, ExtractionResult, PdfPageImage } fr
 export class PdfDataExtractor {
   private client: OpenAI;
   private model: string;
+  private textModel: string;
+  private visionModel: string;
   private config: ExtractorConfig;
 
   /**
@@ -26,7 +28,13 @@ export class PdfDataExtractor {
       ...config,
     };
 
-    this.model = config.model || 'gpt-4o-mini';
+    // Set default model
+    const defaultModel = config.model || 'gpt-4o-mini';
+    this.model = defaultModel;
+    
+    // Set specific models, falling back to the default model
+    this.textModel = config.textModel || defaultModel;
+    this.visionModel = config.visionModel || defaultModel;
 
     const clientConfig: any = {
       apiKey: config.openaiApiKey,
@@ -52,7 +60,7 @@ export class PdfDataExtractor {
     options: ExtractionOptions
   ): Promise<ExtractionResult<T>> {
     const completion = await this.client.chat.completions.create({
-      model: this.model,
+      model: this.textModel,
       messages: [
         {
           role: 'system',
@@ -125,7 +133,7 @@ export class PdfDataExtractor {
     }
 
     const completion = await this.client.chat.completions.create({
-      model: this.model,
+      model: this.visionModel,
       messages: [
         {
           role: 'system',
@@ -208,17 +216,49 @@ export class PdfDataExtractor {
   }
 
   /**
-   * Get the current model being used
+   * Get the current model being used (returns the default model)
    */
   getModel(): string {
     return this.model;
   }
 
   /**
-   * Set a new model to use for extraction
+   * Set a new model to use for extraction (updates both text and vision models)
    * @param model - The model identifier
    */
   setModel(model: string): void {
     this.model = model;
+    this.textModel = model;
+    this.visionModel = model;
+  }
+
+  /**
+   * Get the model being used for text extraction
+   */
+  getTextModel(): string {
+    return this.textModel;
+  }
+
+  /**
+   * Set the model to use for text extraction
+   * @param model - The model identifier
+   */
+  setTextModel(model: string): void {
+    this.textModel = model;
+  }
+
+  /**
+   * Get the model being used for vision extraction
+   */
+  getVisionModel(): string {
+    return this.visionModel;
+  }
+
+  /**
+   * Set the model to use for vision extraction
+   * @param model - The model identifier
+   */
+  setVisionModel(model: string): void {
+    this.visionModel = model;
   }
 }
