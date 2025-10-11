@@ -24,19 +24,18 @@ export function validateSchema(schema: Record<string, any>): boolean {
     throw new Error('Schema cannot be empty');
   }
 
-  // Validate nested schemas
+  // Use AJV to validate the schema by compiling it
+  // If the schema is invalid, ajv.compile() will throw an error
   try {
-    // Check if it's a simple schema format (properties defined directly)
-    // or full JSON schema format (with type: 'object' and properties field)
-    if (!schema.type && !schema.properties) {
-      // Simple format - validate each property
-      for (const [key, value] of Object.entries(schema)) {
-        validateNestedSchema(value, `root.${key}`);
-      }
-    } else {
-      // Full format - validate the schema structure
-      validateNestedSchema(schema);
-    }
+    // Wrap simple schemas in proper JSON schema format for validation
+    const schemaToValidate = schema.type || schema.properties 
+      ? schema 
+      : {
+          type: 'object',
+          properties: schema,
+        };
+    
+    ajv.compile(schemaToValidate);
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Schema validation failed: ${error.message}`);
@@ -45,66 +44,6 @@ export function validateSchema(schema: Record<string, any>): boolean {
   }
 
   return true;
-}
-
-/**
- * Recursively validate nested schema properties
- * @param schema - The schema to validate
- * @param path - Current path in schema (for error messages)
- */
-function validateNestedSchema(schema: any, path: string = 'root'): void {
-  if (!schema || typeof schema !== 'object') {
-    return;
-  }
-
-  // Validate type field if present
-  if (schema.type) {
-    const validTypes = ['object', 'array', 'string', 'number', 'integer', 'boolean', 'null'];
-    const types = Array.isArray(schema.type) ? schema.type : [schema.type];
-    
-    for (const type of types) {
-      if (!validTypes.includes(type)) {
-        throw new Error(`Invalid type "${type}" at ${path}. Valid types are: ${validTypes.join(', ')}`);
-      }
-    }
-  }
-
-  // Validate properties if present
-  if (schema.properties) {
-    if (typeof schema.properties !== 'object') {
-      throw new Error(`Properties must be an object at ${path}`);
-    }
-
-    // Recursively validate nested properties
-    for (const [key, value] of Object.entries(schema.properties)) {
-      validateNestedSchema(value, `${path}.properties.${key}`);
-    }
-  }
-
-  // Validate items if present (for arrays)
-  if (schema.items) {
-    if (typeof schema.items !== 'object') {
-      throw new Error(`Items must be an object at ${path}`);
-    }
-    validateNestedSchema(schema.items, `${path}.items`);
-  }
-
-  // Validate required field if present
-  if (schema.required) {
-    if (!Array.isArray(schema.required)) {
-      throw new Error(`Required must be an array at ${path}`);
-    }
-    
-    // Check that required fields exist in properties
-    if (schema.properties) {
-      const propertyNames = Object.keys(schema.properties);
-      for (const requiredField of schema.required) {
-        if (!propertyNames.includes(requiredField)) {
-          throw new Error(`Required field "${requiredField}" not found in properties at ${path}`);
-        }
-      }
-    }
-  }
 }
 
 /**
