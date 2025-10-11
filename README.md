@@ -130,7 +130,23 @@ Get the current model being used.
 
 ##### setModel(model: string): void
 
-Set a new model to use for extraction.
+Set a new model to use for extraction (updates both text and vision models).
+
+##### getTextModel(): string
+
+Get the model being used for text extraction.
+
+##### setTextModel(model: string): void
+
+Set the model to use for text extraction only.
+
+##### getVisionModel(): string
+
+Get the model being used for vision extraction.
+
+##### setVisionModel(model: string): void
+
+Set the model to use for vision extraction only.
 
 ### Utility Functions
 
@@ -247,6 +263,30 @@ const extractor = new PdfDataExtractor({
   openaiApiKey: 'your-api-key',
   baseUrl: 'https://your-custom-api.com/v1',
   model: 'your-custom-model',
+});
+```
+
+### Using Different Models for Text and Vision
+
+You can configure separate models for text-based and scanned PDF extraction:
+
+```typescript
+const extractor = new PdfDataExtractor({
+  openaiApiKey: 'your-api-key',
+  model: 'gpt-4o-mini', // Default for both
+});
+
+// Use a cheaper model for text extraction
+extractor.setTextModel('gpt-4o-mini');
+
+// Use a more accurate model for vision/scanned PDFs
+extractor.setVisionModel('gpt-4o');
+
+// Now text-based PDFs use gpt-4o-mini (cost-effective)
+// and scanned PDFs use gpt-4o (better accuracy)
+const result = await extractor.extract({
+  pdfPath: './document.pdf',
+  schema: { /* ... */ },
 });
 ```
 
