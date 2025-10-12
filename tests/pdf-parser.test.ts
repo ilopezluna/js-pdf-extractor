@@ -103,5 +103,29 @@ describe('PDF Parser', () => {
       const isValid = await validatePdf(invalidBuffer);
       expect(isValid).toBe(false);
     });
+
+    it('should return false for buffer without PDF signature', async () => {
+      const invalidBuffer = Buffer.from('This is a text file, not a PDF');
+      const isValid = await validatePdf(invalidBuffer);
+      expect(isValid).toBe(false);
+    });
+
+    it('should return false for buffer that is too short', async () => {
+      const tooShortBuffer = Buffer.from('%PD');
+      const isValid = await validatePdf(tooShortBuffer);
+      expect(isValid).toBe(false);
+    });
+
+    it('should return false for empty buffer', async () => {
+      const emptyBuffer = Buffer.alloc(0);
+      const isValid = await validatePdf(emptyBuffer);
+      expect(isValid).toBe(false);
+    });
+
+    it('should return true for buffer with valid PDF signature', async () => {
+      const validSignatureBuffer = Buffer.from('%PDF-1.4\n...');
+      const isValid = await validatePdf(validSignatureBuffer);
+      expect(isValid).toBe(true);
+    });
   });
 });

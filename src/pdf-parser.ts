@@ -69,6 +69,21 @@ async function convertPdfToImages(pdfSource: string | Buffer): Promise<PdfPageIm
 }
 
 /**
+ * Validate that a buffer contains a valid PDF signature (magic number)
+ * @param buffer - Buffer to validate
+ * @returns True if buffer starts with PDF signature (%PDF)
+ */
+function isValidPdfSignature(buffer: Buffer): boolean {
+  if (!buffer || buffer.length < 4) {
+    return false;
+  }
+
+  // Check PDF signature (magic number)
+  const pdfSignature = Buffer.from('%PDF');
+  return buffer.slice(0, 4).equals(pdfSignature);
+}
+
+/**
  * Detect if PDF has sufficient text content
  * @param text - Extracted text from PDF
  * @param threshold - Minimum text length (default: 100)
@@ -112,6 +127,11 @@ export async function parsePdfFromBuffer(
   options?: { textThreshold?: number }
 ): Promise<ParsedPdf> {
   try {
+    // Validate PDF signature before attempting to parse
+    if (!isValidPdfSignature(buffer)) {
+      throw new Error('Invalid PDF: file does not contain PDF signature');
+    }
+
     const data = await pdf(buffer);
     const threshold = options?.textThreshold ?? 100;
     
@@ -154,11 +174,13 @@ export async function parsePdfFromBuffer(
 export async function validatePdf(input: string | Buffer): Promise<boolean> {
   try {
     if (typeof input === 'string') {
-      await parsePdfFromPath(input);
+      // For file paths, read and validate the buffer
+      const dataBuffer = await fs.promises.readFile(input);
+      return isValidPdfSignature(dataBuffer);
     } else {
-      await parsePdfFromBuffer(input);
+      // For buffers, check the signature directly
+      return isValidPdfSignature(input);
     }
-    return true;
   } catch {
     return false;
   }
