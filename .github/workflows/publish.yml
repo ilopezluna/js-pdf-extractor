@@ -1,9 +1,12 @@
 name: Publish to npm
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.2.3). If not specified, patch version will be bumped.'
+        required: false
+        type: string
 
 jobs:
   publish:
@@ -12,6 +15,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -20,8 +26,36 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Bump version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "Using specified version: ${{ inputs.version }}"
+            npm version ${{ inputs.version }} --no-git-tag-version
+            NEW_VERSION="${{ inputs.version }}"
+          else
+            echo "Bumping patch version"
+            npm version patch --no-git-tag-version
+            NEW_VERSION=$(node -p "require('./package.json').version")
+          fi
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Commit version bump
+        run: |
+          git add package.json package-lock.json
+          git commit -m "Bump version to ${{ steps.version.outputs.new_version }}"
+          git tag "v${{ steps.version.outputs.new_version }}"
+          git push origin main
+          git push origin "v${{ steps.version.outputs.new_version }}"
 
       - name: Run tests
         run: npm test
@@ -37,10 +71,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: v${{ steps.version.outputs.new_version }}
+          name: Release v${{ steps.version.outputs.new_version }}
           body: |
-            Published version ${{ github.ref_name }} to npm
+            Published version ${{ steps.version.outputs.new_version }} to npm
             
             See [CHANGELOG](CHANGELOG.md) for details.
         env:
