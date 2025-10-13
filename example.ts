@@ -7,9 +7,9 @@ import { PdfDataExtractor } from './src';
 async function main() {
   // Initialize the extractor with your OpenAI API key
   const extractor = new PdfDataExtractor({
-    openaiApiKey: process.env.OPENAI_API_KEY || 'your-api-key-here',
-    //model: 'gpt-4o-mini', // Optional: specify the model
-    // baseUrl: 'https://api.openai.com/v1', // Optional: custom endpoint
+    openaiApiKey: 'docker-model-runner',
+    model: 'ai/gemma3', // Optional: specify the model
+    baseUrl: 'http://localhost:12434/engines/v1', // Optional: custom endpoint
   });
 
   // Define the schema for data extraction
@@ -77,6 +77,4 @@ async function main() {
 }
 
 // Run the example
-if (require.main === module) {
-  main().catch(console.error);
-}
+main().catch(console.error);

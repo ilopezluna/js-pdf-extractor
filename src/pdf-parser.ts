@@ -1,46 +1,31 @@
 import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import { pdf } from 'pdf-parse';
-import { pdf as pdfToImgConverter } from 'pdf-to-img';
+import { PDFParse } from 'pdf-parse';
 import { ParsedPdf, PdfPageImage } from './types.js';
 
 /**
- * Convert PDF to images using pdf-to-img
+ * Convert PDF to images using pdf-parse v2's built-in getScreenshot
  * @param pdfSource - Path to PDF or Buffer
  * @returns Array of page images as base64 strings
  */
 async function convertPdfToImages(pdfSource: string | Buffer): Promise<PdfPageImage[]> {
-  let tempFilePath: string | null = null;
-  
+  const parser = new PDFParse(
+    typeof pdfSource === 'string' 
+      ? { url: pdfSource }
+      : { data: pdfSource }
+  );
+
   try {
-    
-    let pdfInput: string | Buffer;
+    // Use pdf-parse v2's built-in screenshot functionality
+    const result = await parser.getScreenshot({ 
+      scale: 3,
+      imageDataUrl: true,
+      imageBuffer: false 
+    });
 
-    // If Buffer, write to temp file since pdf-to-img works better with file paths
-    if (Buffer.isBuffer(pdfSource)) {
-      const tempDir = os.tmpdir();
-      tempFilePath = path.join(tempDir, `temp-pdf-${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`);
-      await fs.promises.writeFile(tempFilePath, pdfSource);
-      pdfInput = tempFilePath;
-    } else {
-      pdfInput = pdfSource;
-    }
-
-    // Convert PDF to images with scale factor for quality
-    const document = await pdfToImgConverter(pdfInput, { scale: 3 });
-    
-    const images: PdfPageImage[] = [];
-    let pageNum = 1;
-    
-    // Iterate through all pages
-    for await (const imageBuffer of document) {
-      images.push({
-        page: pageNum,
-        base64: imageBuffer.toString('base64'),
-      });
-      pageNum++;
-    }
+    const images: PdfPageImage[] = result.pages.map((page) => ({
+      page: page.pageNumber,
+      base64: page.dataUrl?.split(',')[1] || '', // Extract base64 from data URL
+    }));
 
     if (images.length === 0) {
       throw new Error('PDF conversion produced no images');
@@ -53,18 +38,7 @@ async function convertPdfToImages(pdfSource: string | Buffer): Promise<PdfPageIm
     }
     throw error;
   } finally {
-    // Always cleanup temp file if it was created
-    if (tempFilePath) {
-      try {
-        await fs.promises.unlink(tempFilePath);
-      } catch (cleanupError) {
-        // Log cleanup failure but don't throw - cleanup errors shouldn't break the flow
-        console.error(
-          `Warning: Failed to cleanup temporary file ${tempFilePath}:`,
-          cleanupError instanceof Error ? cleanupError.message : 'Unknown error'
-        );
-      }
-    }
+    await parser.destroy();
   }
 }
 
@@ -126,28 +100,34 @@ export async function parsePdfFromBuffer(
   buffer: Buffer,
   options?: { textThreshold?: number }
 ): Promise<ParsedPdf> {
-  try {
-    // Validate PDF signature before attempting to parse
-    if (!isValidPdfSignature(buffer)) {
-      throw new Error('Invalid PDF: file does not contain PDF signature');
-    }
+  // Validate PDF signature before attempting to parse
+  if (!isValidPdfSignature(buffer)) {
+    throw new Error('Invalid PDF: file does not contain PDF signature');
+  }
 
-    const data = await pdf(buffer);
+  const parser = new PDFParse({ data: buffer });
+  
+  try {
     const threshold = options?.textThreshold ?? 100;
     
+    // Extract text and info using pdf-parse v2
+    const textResult = await parser.getText();
+    const infoResult = await parser.getInfo();
+    
     // Check if PDF has extractable text
-    if (hasExtractableText(data.text, threshold)) {
+    if (hasExtractableText(textResult.text, threshold)) {
       return {
         content: {
           type: 'text',
-          content: data.text,
+          content: textResult.text,
         },
-        numPages: data.pages.length,
-        info: data.info,
+        numPages: infoResult.total,
+        info: infoResult.info,
       };
     }
     
     // If no text, convert to images
+    await parser.destroy(); // Clean up text parser before creating image parser
     const images = await convertPdfToImages(buffer);
     
     return {
@@ -155,14 +135,16 @@ export async function parsePdfFromBuffer(
         type: 'images',
         content: images,
       },
-      numPages: data.pages.length, // Use original page count even if conversion fails
-      info: data.info,
+      numPages: infoResult.total,
+      info: infoResult.info,
     };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to parse PDF: ${error.message}`);
     }
     throw error;
+  } finally {
+    await parser.destroy();
   }
 }
 
