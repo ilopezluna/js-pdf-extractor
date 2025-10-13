@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import OpenAI, { APIError } from 'openai';
 import { parsePdfFromPath, parsePdfFromBuffer } from './pdf-parser.js';
 import { validateSchema, formatSchemaForOpenAI } from './schema-validator.js';
 import { ExtractorConfig, ExtractionOptions, ExtractionResult, PdfPageImage } from './types.js';
@@ -59,42 +59,54 @@ export class PdfDataExtractor {
     schema: any,
     options: ExtractionOptions
   ): Promise<ExtractionResult<T>> {
-    const completion = await this.client.chat.completions.create({
-      model: this.textModel,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful assistant that extracts structured data from text. Extract the requested information accurately from the provided text.',
+    try {
+      const completion = await this.client.chat.completions.create({
+        model: this.textModel,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant that extracts structured data from text. Extract the requested information accurately from the provided text.',
+          },
+          {
+            role: 'user',
+            content: `Extract the following information from this text:\n\n${text}`,
+          },
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'extracted_data',
+            strict: true,
+            schema,
+          },
         },
-        {
-          role: 'user',
-          content: `Extract the following information from this text:\n\n${text}`,
-        },
-      ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'extracted_data',
-          strict: true,
-          schema,
-        },
-      },
-      temperature: options.temperature ?? 0.1,
-      max_tokens: options.maxTokens,
-    });
+        temperature: options.temperature ?? 0.1,
+        max_tokens: options.maxTokens,
+      });
 
-    const messageContent = completion.choices[0]?.message?.content;
-    if (!messageContent) {
-      throw new Error('No response from OpenAI API');
+      const messageContent = completion.choices[0]?.message?.content;
+      if (!messageContent) {
+        throw new Error('No response from OpenAI API');
+      }
+
+      const extractedData = JSON.parse(messageContent);
+
+      return {
+        data: extractedData as T,
+        tokensUsed: completion.usage?.total_tokens,
+        model: completion.model,
+      };
+    } catch (error) {
+      if (error instanceof APIError) {
+        console.error('OpenAI API Error:', {
+          status: error.status,
+          message: error.message,
+          type: error.type,
+          code: error.code,
+        });
+      }
+      throw error;
     }
-
-    const extractedData = JSON.parse(messageContent);
-
-    return {
-      data: extractedData as T,
-      tokensUsed: completion.usage?.total_tokens,
-      model: completion.model,
-    };
   }
 
   /**
@@ -132,42 +144,54 @@ export class PdfDataExtractor {
       });
     }
 
-    const completion = await this.client.chat.completions.create({
-      model: this.visionModel,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful assistant that extracts structured data from documents. Extract the requested information accurately from the provided document images.',
+    try {
+      const completion = await this.client.chat.completions.create({
+        model: this.visionModel,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant that extracts structured data from documents. Extract the requested information accurately from the provided document images.',
+          },
+          {
+            role: 'user',
+            content,
+          },
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'extracted_data',
+            strict: true,
+            schema,
+          },
         },
-        {
-          role: 'user',
-          content,
-        },
-      ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'extracted_data',
-          strict: true,
-          schema,
-        },
-      },
-      temperature: options.temperature ?? 0.1,
-      max_tokens: options.maxTokens,
-    });
+        temperature: options.temperature ?? 0.1,
+        max_tokens: options.maxTokens,
+      });
 
-    const messageContent = completion.choices[0]?.message?.content;
-    if (!messageContent) {
-      throw new Error('No response from OpenAI API');
+      const messageContent = completion.choices[0]?.message?.content;
+      if (!messageContent) {
+        throw new Error('No response from OpenAI API');
+      }
+
+      const extractedData = JSON.parse(messageContent);
+
+      return {
+        data: extractedData as T,
+        tokensUsed: completion.usage?.total_tokens,
+        model: completion.model,
+      };
+    } catch (error) {
+      if (error instanceof APIError) {
+        console.error('OpenAI API Error:', {
+          status: error.status,
+          message: error.message,
+          type: error.type,
+          code: error.code,
+        });
+      }
+      throw error;
     }
-
-    const extractedData = JSON.parse(messageContent);
-
-    return {
-      data: extractedData as T,
-      tokensUsed: completion.usage?.total_tokens,
-      model: completion.model,
-    };
   }
 
   /**
