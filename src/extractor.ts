@@ -208,6 +208,7 @@ export class PdfDataExtractor {
         return await this.extractFromImages<T>(parsedPdf.content.content, formattedSchema, options);
       }
     } catch (error) {
+      console.error(error);
       if (error instanceof Error) {
         throw new Error(`Failed to extract data: ${error.message}`);
       }
