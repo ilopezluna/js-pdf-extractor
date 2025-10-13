@@ -1,7 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { parsePdfFromPath, parsePdfFromBuffer, validatePdf } from '../src/pdf-parser.js';
+import {
+  parsePdfFromPath,
+  parsePdfFromBuffer,
+  validatePdf,
+} from '../src/pdf-parser.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,11 +16,11 @@ describe('PDF Parser', () => {
   describe('parsePdfFromPath', () => {
     it('should parse a PDF file from path', async () => {
       const result = await parsePdfFromPath(testPdfPath);
-      
+
       expect(result).toBeDefined();
       expect(result.content).toBeDefined();
       expect(['text', 'images']).toContain(result.content.type);
-      
+
       if (result.content.type === 'text') {
         expect(typeof result.content.content).toBe('string');
         expect(result.content.content.length).toBeGreaterThan(0);
@@ -30,9 +34,9 @@ describe('PDF Parser', () => {
 
     it('should extract content from PDF', async () => {
       const result = await parsePdfFromPath(testPdfPath);
-      
+
       expect(['text', 'images']).toContain(result.content.type);
-      
+
       if (result.content.type === 'text') {
         expect(typeof result.content.content).toBe('string');
         expect(result.content.content.length).toBeGreaterThan(0);
@@ -51,7 +55,11 @@ describe('PDF Parser', () => {
     });
 
     it('should throw error for invalid PDF file', async () => {
-      const invalidPath = path.join(__dirname, 'fixtures', 'sample-invoice.txt');
+      const invalidPath = path.join(
+        __dirname,
+        'fixtures',
+        'sample-invoice.txt',
+      );
       await expect(parsePdfFromPath(invalidPath)).rejects.toThrow();
     });
   });
@@ -60,11 +68,11 @@ describe('PDF Parser', () => {
     it('should parse a PDF from buffer', async () => {
       const buffer = fs.readFileSync(testPdfPath);
       const result = await parsePdfFromBuffer(buffer);
-      
+
       expect(result).toBeDefined();
       expect(result.content).toBeDefined();
       expect(['text', 'images']).toContain(result.content.type);
-      
+
       if (result.content.type === 'text') {
         expect(typeof result.content.content).toBe('string');
         expect(result.content.content.length).toBeGreaterThan(0);
