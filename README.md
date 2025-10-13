@@ -64,15 +64,17 @@ console.log(result.data);
 //   items: [...]
 // }
 ```
+
 You can also use local models or other OpenAI-compatible APIs by specifying the `baseUrl` and `model` in the constructor.
+
 ```typescript
 import { PdfDataExtractor } from 'pdf-data-extractor';
 
 // Initialize the extractor
 const extractor = new PdfDataExtractor({
-    openaiApiKey: 'not-required-for-local-models',
-    model: 'ai/gpt-oss',
-    baseUrl: 'http://localhost:12434/engines/v1',
+  openaiApiKey: 'not-required-for-local-models',
+  model: 'ai/gpt-oss',
+  baseUrl: 'http://localhost:12434/engines/v1',
 });
 ```
 
@@ -89,6 +91,7 @@ new PdfDataExtractor(config: ExtractorConfig)
 ```
 
 **Parameters:**
+
 - `config.openaiApiKey` (string, required): Your OpenAI API key
 - `config.model` (string, optional): Model to use (default: 'gpt-4o-mini')
 - `config.baseUrl` (string, optional): Custom OpenAI API base URL
@@ -102,6 +105,7 @@ new PdfDataExtractor(config: ExtractorConfig)
 Extract structured data from a PDF file.
 
 **Parameters:**
+
 - `options.schema` (object, required): JSON schema defining the structure to extract
 - `options.pdfPath` (string, optional): Path to the PDF file
 - `options.pdfBuffer` (Buffer, optional): PDF file as a Buffer
@@ -109,11 +113,13 @@ Extract structured data from a PDF file.
 - `options.maxTokens` (number, optional): Maximum tokens for the response
 
 **Returns:** Promise resolving to:
+
 - `data`: Extracted data matching the schema
 - `tokensUsed`: Number of tokens used in the API call
 - `model`: Model used for extraction
 
 **Example:**
+
 ```typescript
 const result = await extractor.extract({
   pdfPath: './document.pdf',
@@ -201,6 +207,7 @@ const result = await extractor.extract({
 ### Vision-Capable Models
 
 The following models support vision and can process scanned PDFs:
+
 - `gpt-4o` (recommended)
 - `gpt-4o-mini` (default, cost-effective)
 - `gpt-4-turbo`
@@ -215,10 +222,10 @@ The following models support vision and can process scanned PDFs:
 const extractor = new PdfDataExtractor({
   openaiApiKey: 'your-api-key',
   model: 'gpt-4o-mini',
-  
+
   // Enable/disable automatic vision processing
   visionEnabled: true, // default: true
-  
+
   // Minimum text length to consider PDF as text-based
   // PDFs with less text will be processed as images
   textThreshold: 100, // default: 100 characters
@@ -239,7 +246,9 @@ const extractor = new PdfDataExtractor({
 try {
   await extractor.extract({
     pdfPath: './scanned-document.pdf',
-    schema: { /* ... */ },
+    schema: {
+      /* ... */
+    },
   });
 } catch (error) {
   // Error: "PDF contains no extractable text and vision mode is disabled"
@@ -249,6 +258,7 @@ try {
 ### Cost Considerations
 
 Vision API calls cost more than text-only processing:
+
 - **Text-based PDFs**: ~$0.15 per 1M tokens (using GPT-4o-mini)
 - **Scanned PDFs**: ~$0.15 per 1M tokens + image tokens (varies by page size)
 
@@ -286,7 +296,9 @@ extractor.setVisionModel('gpt-4o');
 // and scanned PDFs use gpt-4o (better accuracy)
 const result = await extractor.extract({
   pdfPath: './document.pdf',
-  schema: { /* ... */ },
+  schema: {
+    /* ... */
+  },
 });
 ```
 
@@ -299,7 +311,9 @@ const pdfBuffer = fs.readFileSync('./document.pdf');
 
 const result = await extractor.extract({
   pdfBuffer,
-  schema: { /* your schema */ },
+  schema: {
+    /* your schema */
+  },
 });
 ```
 
@@ -365,7 +379,9 @@ const result = await extractor.extract({
 try {
   const result = await extractor.extract({
     pdfPath: './document.pdf',
-    schema: { /* your schema */ },
+    schema: {
+      /* your schema */
+    },
   });
   console.log(result.data);
 } catch (error) {
@@ -390,12 +406,12 @@ try {
 This library is written in TypeScript and provides full type definitions.
 
 ```typescript
-import { 
+import {
   PdfDataExtractor,
   ExtractorConfig,
   ExtractionOptions,
   ExtractionResult,
-  ParsedPdf 
+  ParsedPdf,
 } from 'pdf-data-extractor';
 
 interface InvoiceData {
@@ -406,7 +422,9 @@ interface InvoiceData {
 
 const result = await extractor.extract<InvoiceData>({
   pdfPath: './invoice.pdf',
-  schema: { /* ... */ },
+  schema: {
+    /* ... */
+  },
 });
 
 // result.data is typed as InvoiceData

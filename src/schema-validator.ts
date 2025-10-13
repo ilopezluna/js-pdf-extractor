@@ -6,7 +6,6 @@ const ajv = new Ajv({
   allErrors: true, // Collect all errors, not just first one
 });
 
-
 /**
  * Validate that a JSON schema is properly formatted
  * @param schema - The JSON schema to validate
@@ -28,13 +27,14 @@ export function validateSchema(schema: Record<string, any>): boolean {
   // If the schema is invalid, ajv.compile() will throw an error
   try {
     // Wrap simple schemas in proper JSON schema format for validation
-    const schemaToValidate = schema.type || schema.properties 
-      ? schema 
-      : {
-          type: 'object',
-          properties: schema,
-        };
-    
+    const schemaToValidate =
+      schema.type || schema.properties
+        ? schema
+        : {
+            type: 'object',
+            properties: schema,
+          };
+
     ajv.compile(schemaToValidate);
   } catch (error) {
     if (error instanceof Error) {
@@ -51,7 +51,9 @@ export function validateSchema(schema: Record<string, any>): boolean {
  * @param schema - The JSON schema
  * @returns Formatted schema for OpenAI
  */
-export function formatSchemaForOpenAI(schema: Record<string, any>): Record<string, any> {
+export function formatSchemaForOpenAI(
+  schema: Record<string, any>,
+): Record<string, any> {
   // If the schema already has the correct structure, return it
   if (schema.type === 'object' && schema.properties) {
     return schema;

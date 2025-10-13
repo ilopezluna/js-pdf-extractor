@@ -34,8 +34,8 @@ console.log(result.data);
 ```typescript
 const extractor = new PdfDataExtractor({
   openaiApiKey: 'your-api-key',
-  model: 'gpt-4o-mini',           // default model
-  baseUrl: 'https://api.openai.com/v1',  // custom endpoint
+  model: 'gpt-4o-mini', // default model
+  baseUrl: 'https://api.openai.com/v1', // custom endpoint
 });
 ```
 
@@ -43,10 +43,12 @@ const extractor = new PdfDataExtractor({
 
 ```typescript
 await extractor.extract({
-  pdfPath: './document.pdf',      // or use pdfBuffer
-  schema: { /* your schema */ },
-  temperature: 0.1,               // 0-2, lower = more deterministic
-  maxTokens: 2000,                // optional token limit
+  pdfPath: './document.pdf', // or use pdfBuffer
+  schema: {
+    /* your schema */
+  },
+  temperature: 0.1, // 0-2, lower = more deterministic
+  maxTokens: 2000, // optional token limit
 });
 ```
 
@@ -65,14 +67,14 @@ When you extract data from a PDF, the library:
 ```typescript
 const extractor = new PdfDataExtractor({
   openaiApiKey: process.env.OPENAI_API_KEY!,
-  model: 'gpt-4o-mini',  // Vision-capable model (default)
-  visionEnabled: true,    // Enable automatic OCR (default: true)
-  textThreshold: 100,     // Min text chars to consider as text-based (default: 100)
+  model: 'gpt-4o-mini', // Vision-capable model (default)
+  visionEnabled: true, // Enable automatic OCR (default: true)
+  textThreshold: 100, // Min text chars to consider as text-based (default: 100)
 });
 
 // Works for both text-based AND scanned PDFs!
 const result = await extractor.extract({
-  pdfPath: './scanned-invoice.pdf',  // Can be a scanned document
+  pdfPath: './scanned-invoice.pdf', // Can be a scanned document
   schema: {
     invoiceNumber: { type: 'string' },
     date: { type: 'string' },
@@ -97,16 +99,16 @@ These models support processing scanned PDFs:
 ```typescript
 const extractor = new PdfDataExtractor({
   openaiApiKey: process.env.OPENAI_API_KEY!,
-  
+
   // Model must support vision for scanned PDFs
   model: 'gpt-4o-mini',
-  
+
   // Enable/disable automatic vision processing
-  visionEnabled: true,  // default: true
-  
+  visionEnabled: true, // default: true
+
   // Minimum text characters to consider PDF as text-based
   // PDFs with fewer characters will be processed as images
-  textThreshold: 100,   // default: 100
+  textThreshold: 100, // default: 100
 });
 ```
 
@@ -117,13 +119,15 @@ If you only want to process text-based PDFs:
 ```typescript
 const extractor = new PdfDataExtractor({
   openaiApiKey: process.env.OPENAI_API_KEY!,
-  visionEnabled: false,  // Reject scanned PDFs
+  visionEnabled: false, // Reject scanned PDFs
 });
 
 try {
   await extractor.extract({
     pdfPath: './scanned-doc.pdf',
-    schema: { /* ... */ },
+    schema: {
+      /* ... */
+    },
   });
 } catch (error) {
   // Will throw: "PDF contains no extractable text and vision mode is disabled"
@@ -134,17 +138,20 @@ try {
 ### Cost Considerations
 
 **Text-based PDFs:**
+
 - Uses standard text tokens
 - ~$0.15 per 1M input tokens (GPT-4o-mini)
 - Very cost-effective
 
 **Scanned PDFs:**
+
 - Uses vision tokens (image processing)
 - ~$0.15 per 1M tokens + image tokens
 - Typical single-page invoice: $0.01-0.03
 - Multi-page documents: scales with page count
 
 **Example costs (GPT-4o-mini):**
+
 - 1-page scanned invoice: ~$0.01-0.02
 - 5-page scanned contract: ~$0.05-0.10
 - 20-page scanned report: ~$0.20-0.40
@@ -152,20 +159,23 @@ try {
 ### Troubleshooting Scanned PDFs
 
 **Error: "Model 'X' does not support vision"**
+
 ```typescript
 // Solution: Use a vision-capable model
 const extractor = new PdfDataExtractor({
   openaiApiKey: process.env.OPENAI_API_KEY!,
-  model: 'gpt-4o-mini',  // ✓ Vision-capable
+  model: 'gpt-4o-mini', // ✓ Vision-capable
 });
 ```
 
 **Error: "Failed to convert PDF to images"**
+
 - Check that the PDF file is not corrupted
 - Ensure sufficient disk space for image conversion
 - Try a different PDF reader/generator
 
 **Poor extraction quality from scanned PDFs:**
+
 - Use higher quality scans (300+ DPI recommended)
 - Ensure scanned documents are properly aligned
 - Try `gpt-4o` instead of `gpt-4o-mini` for better accuracy
@@ -202,6 +212,7 @@ const extractor = new PdfDataExtractor({
 ```
 
 Adjust `textThreshold` based on your use case:
+
 - **Lower threshold (50)**: More aggressive vision mode
 - **Higher threshold (200)**: Only use vision for truly empty PDFs
 
@@ -282,7 +293,9 @@ const pdfBuffer = fs.readFileSync('./document.pdf');
 
 const result = await extractor.extract({
   pdfBuffer,
-  schema: { /* ... */ },
+  schema: {
+    /* ... */
+  },
 });
 ```
 
@@ -292,13 +305,14 @@ const result = await extractor.extract({
 try {
   const result = await extractor.extract({
     pdfPath: './document.pdf',
-    schema: { /* ... */ },
+    schema: {
+      /* ... */
+    },
   });
-  
+
   // Process result
   console.log(result.data);
   console.log(`Used ${result.tokensUsed} tokens`);
-  
 } catch (error) {
   if (error instanceof Error) {
     // Handle specific errors
@@ -334,21 +348,22 @@ const extractor = new PdfDataExtractor({
   openaiApiKey: process.env.OPENAI_API_KEY!,
 });
 
-const result: ExtractionResult<InvoiceData> = await extractor.extract<InvoiceData>({
-  pdfPath: './invoice.pdf',
-  schema: {
-    invoiceNumber: { type: 'string' },
-    date: { type: 'string' },
-    customer: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        email: { type: 'string' },
+const result: ExtractionResult<InvoiceData> =
+  await extractor.extract<InvoiceData>({
+    pdfPath: './invoice.pdf',
+    schema: {
+      invoiceNumber: { type: 'string' },
+      date: { type: 'string' },
+      customer: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          email: { type: 'string' },
+        },
       },
+      total: { type: 'number' },
     },
-    total: { type: 'number' },
-  },
-});
+  });
 
 // TypeScript knows the type of result.data
 console.log(result.data.customer.name);
@@ -490,3 +505,4 @@ const contractSchema = {
     },
   },
 };
+```

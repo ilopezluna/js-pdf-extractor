@@ -68,7 +68,6 @@ async function main() {
     console.log(`Invoice: ${typedResult.data.invoiceNumber}`);
     console.log(`Customer: ${typedResult.data.customerName}`);
     console.log(`Total: $${typedResult.data.totalAmount}`);
-
   } catch (error) {
     if (error instanceof Error) {
       console.error('Error extracting data:', error.message);

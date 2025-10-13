@@ -1,4 +1,8 @@
-import { validateSchema, formatSchemaForOpenAI, getValidationErrors } from '../src/schema-validator.js';
+import {
+  validateSchema,
+  formatSchemaForOpenAI,
+  getValidationErrors,
+} from '../src/schema-validator.js';
 
 describe('Schema Validator', () => {
   describe('validateSchema', () => {
@@ -23,11 +27,15 @@ describe('Schema Validator', () => {
     });
 
     it('should throw error for null schema', () => {
-      expect(() => validateSchema(null as any)).toThrow('Schema must be a non-null object');
+      expect(() => validateSchema(null as any)).toThrow(
+        'Schema must be a non-null object',
+      );
     });
 
     it('should throw error for undefined schema', () => {
-      expect(() => validateSchema(undefined as any)).toThrow('Schema must be a non-null object');
+      expect(() => validateSchema(undefined as any)).toThrow(
+        'Schema must be a non-null object',
+      );
     });
 
     it('should throw error for empty object', () => {
@@ -35,12 +43,18 @@ describe('Schema Validator', () => {
     });
 
     it('should throw error for array schema', () => {
-      expect(() => validateSchema([] as any)).toThrow('Schema must be a non-null object');
+      expect(() => validateSchema([] as any)).toThrow(
+        'Schema must be a non-null object',
+      );
     });
 
     it('should throw error for non-object schema', () => {
-      expect(() => validateSchema('not an object' as any)).toThrow('Schema must be a non-null object');
-      expect(() => validateSchema(123 as any)).toThrow('Schema must be a non-null object');
+      expect(() => validateSchema('not an object' as any)).toThrow(
+        'Schema must be a non-null object',
+      );
+      expect(() => validateSchema(123 as any)).toThrow(
+        'Schema must be a non-null object',
+      );
     });
 
     it('should validate nested object schemas', () => {
@@ -122,7 +136,9 @@ describe('Schema Validator', () => {
         },
         required: 'not an array',
       };
-      expect(() => validateSchema(schema as any)).toThrow('Schema validation failed');
+      expect(() => validateSchema(schema as any)).toThrow(
+        'Schema validation failed',
+      );
     });
 
     it('should validate complex nested schemas', () => {
