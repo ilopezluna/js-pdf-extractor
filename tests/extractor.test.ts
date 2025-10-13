@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { PdfDataExtractor } from '../src/extractor.js';
-import { ExtractionOptions } from '../src/types.js';
+import { PdfDataExtractor } from '../src';
+import { ExtractionOptions } from '../src';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +45,43 @@ describe('PdfDataExtractor', () => {
       });
 
       expect(extractor.getModel()).toBe('gpt-4');
+    });
+
+    it('should create extractor with custom system prompt', () => {
+      const customPrompt = 'Custom extraction prompt';
+      const extractor = new PdfDataExtractor({
+        openaiApiKey: 'test-api-key',
+        systemPrompt: customPrompt,
+      });
+
+      expect(extractor).toBeDefined();
+    });
+
+    it('should create extractor with empty system prompt', () => {
+      const extractor = new PdfDataExtractor({
+        openaiApiKey: 'test-api-key',
+        systemPrompt: '',
+      });
+
+      expect(extractor).toBeDefined();
+    });
+
+    it('should create extractor with custom default temperature', () => {
+      const extractor = new PdfDataExtractor({
+        openaiApiKey: 'test-api-key',
+        defaultTemperature: 0.5,
+      });
+
+      expect(extractor).toBeDefined();
+    });
+
+    it('should create extractor with temperature of 0', () => {
+      const extractor = new PdfDataExtractor({
+        openaiApiKey: 'test-api-key',
+        defaultTemperature: 0,
+      });
+
+      expect(extractor).toBeDefined();
     });
 
     it('should throw error without API key', () => {
@@ -110,15 +147,6 @@ describe('PdfDataExtractor', () => {
       expect(extractor.getModel()).toBe('gpt-4');
     });
 
-    it('should set new model', () => {
-      const extractor = new PdfDataExtractor({
-        openaiApiKey: 'test-api-key',
-      });
-
-      extractor.setModel('gpt-4-turbo');
-      expect(extractor.getModel()).toBe('gpt-4-turbo');
-    });
-
     it('should use same model for text and vision by default', () => {
       const extractor = new PdfDataExtractor({
         openaiApiKey: 'test-api-key',
@@ -159,39 +187,6 @@ describe('PdfDataExtractor', () => {
 
       expect(extractor.getTextModel()).toBe('gpt-4'); // Falls back to model
       expect(extractor.getVisionModel()).toBe('gpt-4o'); // Uses specific visionModel
-    });
-
-    it('should set text model independently', () => {
-      const extractor = new PdfDataExtractor({
-        openaiApiKey: 'test-api-key',
-      });
-
-      extractor.setTextModel('gpt-4-turbo');
-      expect(extractor.getTextModel()).toBe('gpt-4-turbo');
-      expect(extractor.getVisionModel()).toBe('gpt-4o-mini'); // Unchanged
-    });
-
-    it('should set vision model independently', () => {
-      const extractor = new PdfDataExtractor({
-        openaiApiKey: 'test-api-key',
-      });
-
-      extractor.setVisionModel('gpt-4o');
-      expect(extractor.getVisionModel()).toBe('gpt-4o');
-      expect(extractor.getTextModel()).toBe('gpt-4o-mini'); // Unchanged
-    });
-
-    it('should update both models when using setModel', () => {
-      const extractor = new PdfDataExtractor({
-        openaiApiKey: 'test-api-key',
-        textModel: 'gpt-3.5-turbo',
-        visionModel: 'gpt-4o',
-      });
-
-      extractor.setModel('gpt-4-turbo');
-      expect(extractor.getModel()).toBe('gpt-4-turbo');
-      expect(extractor.getTextModel()).toBe('gpt-4-turbo');
-      expect(extractor.getVisionModel()).toBe('gpt-4-turbo');
     });
   });
 });

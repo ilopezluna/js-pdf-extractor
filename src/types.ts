@@ -16,6 +16,10 @@ export interface ExtractorConfig {
   visionEnabled?: boolean;
   /** Minimum text length to consider PDF as text-based (default: 100) */
   textThreshold?: number;
+  /** Optional custom system prompt for the AI model (default: sensible prompt for data extraction) */
+  systemPrompt?: string;
+  /** Optional default temperature for all extractions (default: 0) */
+  defaultTemperature?: number;
 }
 
 /**

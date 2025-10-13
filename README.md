@@ -97,6 +97,8 @@ new PdfDataExtractor(config: ExtractorConfig)
 - `config.baseUrl` (string, optional): Custom OpenAI API base URL
 - `config.visionEnabled` (boolean, optional): Enable automatic vision-based OCR for scanned PDFs (default: true)
 - `config.textThreshold` (number, optional): Minimum text length to consider PDF as text-based (default: 100)
+- `config.systemPrompt` (string, optional): Custom system prompt for the AI model. Set to empty string for models that don't support system prompts (default: sensible prompt for data extraction)
+- `config.defaultTemperature` (number, optional): Default temperature for all extractions, can be overridden per extraction (default: 0)
 
 #### Methods
 
@@ -130,52 +132,6 @@ const result = await extractor.extract({
 });
 ```
 
-##### getModel(): string
-
-Get the current model being used.
-
-##### setModel(model: string): void
-
-Set a new model to use for extraction (updates both text and vision models).
-
-##### getTextModel(): string
-
-Get the model being used for text extraction.
-
-##### setTextModel(model: string): void
-
-Set the model to use for text extraction only.
-
-##### getVisionModel(): string
-
-Get the model being used for vision extraction.
-
-##### setVisionModel(model: string): void
-
-Set the model to use for vision extraction only.
-
-### Utility Functions
-
-#### parsePdfFromPath(pdfPath: string): Promise<ParsedPdf>
-
-Parse a PDF file from a file path.
-
-#### parsePdfFromBuffer(buffer: Buffer): Promise<ParsedPdf>
-
-Parse a PDF from a Buffer.
-
-#### validatePdf(input: string | Buffer): Promise<boolean>
-
-Validate that a PDF can be parsed.
-
-#### validateSchema(schema: Record<string, any>): boolean
-
-Validate that a JSON schema is properly formatted.
-
-#### formatSchemaForOpenAI(schema: Record<string, any>): Record<string, any>
-
-Convert a JSON schema to OpenAI function calling format.
-
 ## Scanned PDF Support
 
 This library automatically detects and handles scanned PDFs (documents that are images) using AI vision models. When a PDF contains insufficient extractable text, it automatically:
@@ -201,78 +157,6 @@ const result = await extractor.extract({
     invoiceNumber: { type: 'string' },
     total: { type: 'number' },
   },
-});
-```
-
-### Vision-Capable Models
-
-The following models support vision and can process scanned PDFs:
-
-- `gpt-4o` (recommended)
-- `gpt-4o-mini` (default, cost-effective)
-- `gpt-4-turbo`
-- `gpt-4-vision-preview`
-- `claude-3-5-sonnet`
-- `claude-3-opus`
-- `gemini-1.5-pro`
-
-### Configuration Options
-
-```typescript
-const extractor = new PdfDataExtractor({
-  openaiApiKey: 'your-api-key',
-  model: 'gpt-4o-mini',
-
-  // Enable/disable automatic vision processing
-  visionEnabled: true, // default: true
-
-  // Minimum text length to consider PDF as text-based
-  // PDFs with less text will be processed as images
-  textThreshold: 100, // default: 100 characters
-});
-```
-
-### Disabling Vision Support
-
-If you want to only process text-based PDFs and reject scanned documents:
-
-```typescript
-const extractor = new PdfDataExtractor({
-  openaiApiKey: 'your-api-key',
-  visionEnabled: false, // Disable vision processing
-});
-
-// This will throw an error if PDF is scanned
-try {
-  await extractor.extract({
-    pdfPath: './scanned-document.pdf',
-    schema: {
-      /* ... */
-    },
-  });
-} catch (error) {
-  // Error: "PDF contains no extractable text and vision mode is disabled"
-}
-```
-
-### Cost Considerations
-
-Vision API calls cost more than text-only processing:
-
-- **Text-based PDFs**: ~$0.15 per 1M tokens (using GPT-4o-mini)
-- **Scanned PDFs**: ~$0.15 per 1M tokens + image tokens (varies by page size)
-
-A typical scanned invoice (1 page) costs approximately $0.01-0.03 with GPT-4o-mini.
-
-## Advanced Usage
-
-### Using with Custom OpenAI-Compatible APIs
-
-```typescript
-const extractor = new PdfDataExtractor({
-  openaiApiKey: 'your-api-key',
-  baseUrl: 'https://your-custom-api.com/v1',
-  model: 'your-custom-model',
 });
 ```
 
@@ -302,134 +186,7 @@ const result = await extractor.extract({
 });
 ```
 
-### Extracting from Buffer
-
-```typescript
-import * as fs from 'fs';
-
-const pdfBuffer = fs.readFileSync('./document.pdf');
-
-const result = await extractor.extract({
-  pdfBuffer,
-  schema: {
-    /* your schema */
-  },
-});
-```
-
-### Complex Schema Example
-
-```typescript
-const schema = {
-  type: 'object',
-  properties: {
-    invoice: {
-      type: 'object',
-      properties: {
-        number: { type: 'string' },
-        date: { type: 'string' },
-        dueDate: { type: 'string' },
-      },
-      required: ['number', 'date'],
-    },
-    customer: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        email: { type: 'string' },
-        address: { type: 'string' },
-      },
-      required: ['name'],
-    },
-    items: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          description: { type: 'string' },
-          quantity: { type: 'number' },
-          unitPrice: { type: 'number' },
-          total: { type: 'number' },
-        },
-        required: ['description', 'total'],
-      },
-    },
-    totals: {
-      type: 'object',
-      properties: {
-        subtotal: { type: 'number' },
-        tax: { type: 'number' },
-        total: { type: 'number' },
-      },
-      required: ['total'],
-    },
-  },
-  required: ['invoice', 'customer', 'items', 'totals'],
-};
-
-const result = await extractor.extract({
-  pdfPath: './invoice.pdf',
-  schema,
-});
-```
-
-## Error Handling
-
-```typescript
-try {
-  const result = await extractor.extract({
-    pdfPath: './document.pdf',
-    schema: {
-      /* your schema */
-    },
-  });
-  console.log(result.data);
-} catch (error) {
-  if (error instanceof Error) {
-    console.error('Extraction failed:', error.message);
-  }
-}
-```
-
-## Common Errors
-
-- **"OpenAI API key is required"**: Provide a valid API key in the constructor
-- **"Either pdfPath or pdfBuffer must be provided"**: Provide either a file path or buffer
-- **"Invalid JSON schema provided"**: Ensure your schema is a non-empty object
-- **"Failed to parse PDF"**: The PDF file may be corrupted or in an unsupported format
-- **"PDF contains no extractable text and vision mode is disabled"**: The PDF is scanned/image-based but vision processing is disabled
-- **"Model 'X' does not support vision"**: Use a vision-capable model (e.g., gpt-4o, gpt-4o-mini) for scanned PDFs
-- **"Failed to convert PDF to images"**: Issue converting scanned PDF to images (check PDF integrity)
-
-## TypeScript Support
-
-This library is written in TypeScript and provides full type definitions.
-
-```typescript
-import {
-  PdfDataExtractor,
-  ExtractorConfig,
-  ExtractionOptions,
-  ExtractionResult,
-  ParsedPdf,
-} from 'pdf-data-extractor';
-
-interface InvoiceData {
-  invoiceNumber: string;
-  date: string;
-  total: number;
-}
-
-const result = await extractor.extract<InvoiceData>({
-  pdfPath: './invoice.pdf',
-  schema: {
-    /* ... */
-  },
-});
-
-// result.data is typed as InvoiceData
-console.log(result.data.invoiceNumber);
-```
+See [Usage](USAGE.md) for more examples.
 
 ## Testing
 

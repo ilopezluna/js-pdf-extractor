@@ -10,6 +10,9 @@ async function main() {
     openaiApiKey: 'docker-model-runner',
     model: 'ai/gemma3', // Optional: specify the model
     baseUrl: 'http://localhost:12434/engines/v1', // Optional: custom endpoint
+    defaultTemperature: 0, // Optional: default temperature (default: 0)
+    // systemPrompt: 'Custom prompt here', // Optional: custom system prompt
+    // systemPrompt: '', // Optional: set to empty string for models that don't support system prompts
   });
 
   // Define the schema for data extraction

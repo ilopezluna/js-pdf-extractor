@@ -12,11 +12,13 @@ import {
  * Main class for extracting structured data from PDFs using OpenAI
  */
 export class PdfDataExtractor {
-  private client: OpenAI;
-  private model: string;
-  private textModel: string;
-  private visionModel: string;
-  private config: ExtractorConfig;
+  private readonly client: OpenAI;
+  private readonly model: string;
+  private readonly textModel: string;
+  private readonly visionModel: string;
+  private readonly config: ExtractorConfig;
+  private readonly systemPrompt: string;
+  private readonly defaultTemperature: number;
 
   /**
    * Create a new PDF data extractor
@@ -32,6 +34,15 @@ export class PdfDataExtractor {
       textThreshold: 100,
       ...config,
     };
+
+    // Set system prompt with sensible default
+    this.systemPrompt =
+      config.systemPrompt !== undefined
+        ? config.systemPrompt
+        : 'You are a helpful assistant that extracts structured data from text. Extract the requested information accurately from the provided text.';
+
+    // Set default temperature
+    this.defaultTemperature = config.defaultTemperature ?? 0;
 
     // Set default model
     const defaultModel = config.model || 'gpt-4o-mini';
@@ -64,19 +75,24 @@ export class PdfDataExtractor {
     schema: any,
     options: ExtractionOptions,
   ): Promise<ExtractionResult<T>> {
+    // Build messages array, only including system message if systemPrompt is not empty
+    const messages: any[] = [];
+
+    if (this.systemPrompt) {
+      messages.push({
+        role: 'system',
+        content: this.systemPrompt,
+      });
+    }
+
+    messages.push({
+      role: 'user',
+      content: `Extract the following information from this text:\n\n${text}`,
+    });
+
     const completion = await this.client.chat.completions.create({
       model: this.textModel,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a helpful assistant that extracts structured data from text. Extract the requested information accurately from the provided text.',
-        },
-        {
-          role: 'user',
-          content: `Extract the following information from this text:\n\n${text}`,
-        },
-      ],
+      messages,
       response_format: {
         type: 'json_schema',
         json_schema: {
@@ -85,7 +101,7 @@ export class PdfDataExtractor {
           schema,
         },
       },
-      temperature: options.temperature ?? 0.1,
+      temperature: options.temperature ?? this.defaultTemperature,
       max_tokens: options.maxTokens,
     });
 
@@ -140,19 +156,24 @@ export class PdfDataExtractor {
       });
     }
 
+    // Build messages array, only including system message if systemPrompt is not empty
+    const messages: any[] = [];
+
+    if (this.systemPrompt) {
+      messages.push({
+        role: 'system',
+        content: this.systemPrompt,
+      });
+    }
+
+    messages.push({
+      role: 'user',
+      content,
+    });
+
     const completion = await this.client.chat.completions.create({
       model: this.visionModel,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a helpful assistant that extracts structured data from documents. Extract the requested information accurately from the provided document images.',
-        },
-        {
-          role: 'user',
-          content,
-        },
-      ],
+      messages,
       response_format: {
         type: 'json_schema',
         json_schema: {
@@ -161,7 +182,7 @@ export class PdfDataExtractor {
           schema,
         },
       },
-      temperature: options.temperature ?? 0.1,
+      temperature: options.temperature ?? this.defaultTemperature,
       max_tokens: options.maxTokens,
     });
 
@@ -247,16 +268,6 @@ export class PdfDataExtractor {
   }
 
   /**
-   * Set a new model to use for extraction (updates both text and vision models)
-   * @param model - The model identifier
-   */
-  setModel(model: string): void {
-    this.model = model;
-    this.textModel = model;
-    this.visionModel = model;
-  }
-
-  /**
    * Get the model being used for text extraction
    */
   getTextModel(): string {
@@ -264,25 +275,9 @@ export class PdfDataExtractor {
   }
 
   /**
-   * Set the model to use for text extraction
-   * @param model - The model identifier
-   */
-  setTextModel(model: string): void {
-    this.textModel = model;
-  }
-
-  /**
    * Get the model being used for vision extraction
    */
   getVisionModel(): string {
     return this.visionModel;
-  }
-
-  /**
-   * Set the model to use for vision extraction
-   * @param model - The model identifier
-   */
-  setVisionModel(model: string): void {
-    this.visionModel = model;
   }
 }
