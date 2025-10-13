@@ -26,16 +26,7 @@ export function validateSchema(schema: Record<string, any>): boolean {
   // Use AJV to validate the schema by compiling it
   // If the schema is invalid, ajv.compile() will throw an error
   try {
-    // Wrap simple schemas in proper JSON schema format for validation
-    const schemaToValidate =
-      schema.type || schema.properties
-        ? schema
-        : {
-            type: 'object',
-            properties: schema,
-          };
-
-    ajv.compile(schemaToValidate);
+    ajv.compile(schema);
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Schema validation failed: ${error.message}`);
@@ -44,35 +35,4 @@ export function validateSchema(schema: Record<string, any>): boolean {
   }
 
   return true;
-}
-
-/**
- * Convert a JSON schema to OpenAI function calling format
- * @param schema - The JSON schema
- * @returns Formatted schema for OpenAI
- */
-export function formatSchemaForOpenAI(
-  schema: Record<string, any>,
-): Record<string, any> {
-  // If the schema already has the correct structure, return it
-  if (schema.type === 'object' && schema.properties) {
-    return schema;
-  }
-
-  // Otherwise, wrap it in the expected format
-  return {
-    type: 'object',
-    properties: schema,
-    required: Object.keys(schema),
-    additionalProperties: false,
-  };
-}
-
-/**
- * Get detailed error information from last validation
- * @returns Array of validation error messages
- */
-export function getValidationErrors(): string[] {
-  const errors = ajv.errors || [];
-  return errors.map((err) => `${err.instancePath || 'root'}: ${err.message}`);
 }

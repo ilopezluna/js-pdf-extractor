@@ -10,11 +10,7 @@ export {
   parsePdfFromBuffer,
   validatePdf,
 } from './pdf-parser.js';
-export {
-  validateSchema,
-  formatSchemaForOpenAI,
-  getValidationErrors,
-} from './schema-validator.js';
+export { validateSchema } from './schema-validator.js';
 export type {
   ExtractorConfig,
   ExtractionOptions,

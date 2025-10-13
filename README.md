@@ -98,7 +98,6 @@ new PdfDataExtractor(config: ExtractorConfig)
 - `config.visionEnabled` (boolean, optional): Enable automatic vision-based OCR for scanned PDFs (default: true)
 - `config.textThreshold` (number, optional): Minimum text length to consider PDF as text-based (default: 100)
 - `config.systemPrompt` (string, optional): Custom system prompt for the AI model. Set to empty string for models that don't support system prompts (default: sensible prompt for data extraction)
-- `config.defaultTemperature` (number, optional): Default temperature for all extractions, can be overridden per extraction (default: 0)
 
 #### Methods
 

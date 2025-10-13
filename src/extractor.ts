@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { parsePdfFromPath, parsePdfFromBuffer } from './pdf-parser.js';
-import { validateSchema, formatSchemaForOpenAI } from './schema-validator.js';
+import { validateSchema } from './schema-validator.js';
 import {
   ExtractorConfig,
   ExtractionOptions,
@@ -18,7 +18,6 @@ export class PdfDataExtractor {
   private readonly visionModel: string;
   private readonly config: ExtractorConfig;
   private readonly systemPrompt: string;
-  private readonly defaultTemperature: number;
 
   /**
    * Create a new PDF data extractor
@@ -41,9 +40,6 @@ export class PdfDataExtractor {
         ? config.systemPrompt
         : 'You are a helpful assistant that extracts structured data from text. Extract the requested information accurately from the provided text.';
 
-    // Set default temperature
-    this.defaultTemperature = config.defaultTemperature ?? 0;
-
     // Set default model
     const defaultModel = config.model || 'gpt-4o-mini';
     this.model = defaultModel;
@@ -61,6 +57,63 @@ export class PdfDataExtractor {
     }
 
     this.client = new OpenAI(clientConfig);
+  }
+
+  /**
+   * Extract structured data from a PDF file
+   * @param options - Extraction options including schema and PDF source
+   * @returns Extracted data matching the schema
+   */
+  async extract<T = any>(
+    options: ExtractionOptions,
+  ): Promise<ExtractionResult<T>> {
+    // Validate inputs
+    if (!options.pdfPath && !options.pdfBuffer) {
+      throw new Error('Either pdfPath or pdfBuffer must be provided');
+    }
+
+    try {
+      validateSchema(options.schema);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Invalid JSON schema: ${error.message}`);
+      }
+      throw new Error('Invalid JSON schema provided');
+    }
+
+    // Parse the PDF
+    const parsedPdf = options.pdfPath
+      ? await parsePdfFromPath(options.pdfPath, {
+          textThreshold: this.config.textThreshold,
+        })
+      : await parsePdfFromBuffer(options.pdfBuffer!, {
+          textThreshold: this.config.textThreshold,
+        });
+
+    // Call OpenAI API with structured output
+    try {
+      if (parsedPdf.content.type === 'text') {
+        // Extract from text content
+        return await this.extractFromText<T>(
+          parsedPdf.content.content,
+          options.schema,
+          options,
+        );
+      } else {
+        // Extract from images using vision API
+        return await this.extractFromImages<T>(
+          parsedPdf.content.content,
+          options.schema,
+          options,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        throw new Error(`Failed to extract data: ${error.message}`);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -101,7 +154,7 @@ export class PdfDataExtractor {
           schema,
         },
       },
-      temperature: options.temperature ?? this.defaultTemperature,
+      temperature: options.temperature ?? 0,
       max_tokens: options.maxTokens,
     });
 
@@ -182,7 +235,7 @@ export class PdfDataExtractor {
           schema,
         },
       },
-      temperature: options.temperature ?? this.defaultTemperature,
+      temperature: options.temperature || 0,
       max_tokens: options.maxTokens,
     });
 
@@ -198,66 +251,6 @@ export class PdfDataExtractor {
       tokensUsed: completion.usage?.total_tokens,
       model: completion.model,
     };
-  }
-
-  /**
-   * Extract structured data from a PDF file
-   * @param options - Extraction options including schema and PDF source
-   * @returns Extracted data matching the schema
-   */
-  async extract<T = any>(
-    options: ExtractionOptions,
-  ): Promise<ExtractionResult<T>> {
-    // Validate inputs
-    if (!options.pdfPath && !options.pdfBuffer) {
-      throw new Error('Either pdfPath or pdfBuffer must be provided');
-    }
-
-    try {
-      validateSchema(options.schema);
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Invalid JSON schema: ${error.message}`);
-      }
-      throw new Error('Invalid JSON schema provided');
-    }
-
-    // Parse the PDF
-    const parsedPdf = options.pdfPath
-      ? await parsePdfFromPath(options.pdfPath, {
-          textThreshold: this.config.textThreshold,
-        })
-      : await parsePdfFromBuffer(options.pdfBuffer!, {
-          textThreshold: this.config.textThreshold,
-        });
-
-    // Format schema for OpenAI
-    const formattedSchema = formatSchemaForOpenAI(options.schema);
-
-    // Call OpenAI API with structured output
-    try {
-      if (parsedPdf.content.type === 'text') {
-        // Extract from text content
-        return await this.extractFromText<T>(
-          parsedPdf.content.content,
-          formattedSchema,
-          options,
-        );
-      } else {
-        // Extract from images using vision API
-        return await this.extractFromImages<T>(
-          parsedPdf.content.content,
-          formattedSchema,
-          options,
-        );
-      }
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        throw new Error(`Failed to extract data: ${error.message}`);
-      }
-      throw error;
-    }
   }
 
   /**

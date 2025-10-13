@@ -1,8 +1,4 @@
-import {
-  validateSchema,
-  formatSchemaForOpenAI,
-  getValidationErrors,
-} from '../src/schema-validator.js';
+import { validateSchema } from '../src';
 
 describe('Schema Validator', () => {
   describe('validateSchema', () => {
@@ -91,13 +87,6 @@ describe('Schema Validator', () => {
         },
       };
       expect(validateSchema(schema)).toBe(true);
-    });
-
-    it('should throw error for invalid type', () => {
-      const schema = {
-        name: { type: 'invalidType' },
-      };
-      expect(() => validateSchema(schema)).toThrow('Schema validation failed');
     });
 
     it('should throw error for invalid properties structure', () => {
@@ -194,74 +183,6 @@ describe('Schema Validator', () => {
         },
       };
       expect(validateSchema(schema)).toBe(true);
-    });
-  });
-
-  describe('formatSchemaForOpenAI', () => {
-    it('should wrap simple schema in OpenAI format', () => {
-      const schema = {
-        name: { type: 'string' },
-        amount: { type: 'number' },
-      };
-
-      const formatted = formatSchemaForOpenAI(schema);
-
-      expect(formatted).toHaveProperty('type', 'object');
-      expect(formatted).toHaveProperty('properties');
-      expect(formatted.properties).toEqual(schema);
-      expect(formatted).toHaveProperty('required');
-      expect(formatted.required).toEqual(['name', 'amount']);
-      expect(formatted).toHaveProperty('additionalProperties', false);
-    });
-
-    it('should return schema as-is if already in correct format', () => {
-      const schema = {
-        type: 'object',
-        properties: {
-          name: { type: 'string' },
-          amount: { type: 'number' },
-        },
-        required: ['name'],
-      };
-
-      const formatted = formatSchemaForOpenAI(schema);
-
-      expect(formatted).toEqual(schema);
-    });
-
-    it('should handle complex nested schema', () => {
-      const schema = {
-        invoice: {
-          type: 'object',
-          properties: {
-            number: { type: 'string' },
-            date: { type: 'string' },
-          },
-        },
-        items: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              name: { type: 'string' },
-              price: { type: 'number' },
-            },
-          },
-        },
-      };
-
-      const formatted = formatSchemaForOpenAI(schema);
-
-      expect(formatted.type).toBe('object');
-      expect(formatted.properties).toEqual(schema);
-      expect(formatted.required).toEqual(['invoice', 'items']);
-    });
-  });
-
-  describe('getValidationErrors', () => {
-    it('should return empty array when no errors', () => {
-      const errors = getValidationErrors();
-      expect(Array.isArray(errors)).toBe(true);
     });
   });
 });
