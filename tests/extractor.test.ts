@@ -8,17 +8,17 @@ const __dirname = path.dirname(__filename);
 
 /**
  * PdfDataExtractor Unit Tests
- * 
+ *
  * Note: Full extraction tests with OpenAI API calls are intentionally omitted
  * from the unit test suite. These require:
  * 1. Valid API keys (not suitable for unit tests)
  * 2. Complex ESM mocking setup (jest.unstable_mockModule has limitations)
- * 
+ *
  * For comprehensive extraction testing, consider:
  * - Integration tests with real API keys (run separately)
  * - Manual testing with actual OpenAI credentials
  * - End-to-end tests in a staging environment
- * 
+ *
  * Current coverage focuses on:
  * - Constructor validation
  * - Input validation (schema, PDF paths)
@@ -73,7 +73,7 @@ describe('PdfDataExtractor', () => {
       await expect(
         extractor.extract({
           schema,
-        } as ExtractionOptions)
+        } as ExtractionOptions),
       ).rejects.toThrow('Either pdfPath or pdfBuffer must be provided');
     });
 
@@ -82,7 +82,7 @@ describe('PdfDataExtractor', () => {
         extractor.extract({
           pdfPath: testPdfPath,
           schema: {} as any,
-        })
+        }),
       ).rejects.toThrow('Invalid JSON schema');
     });
 
@@ -95,7 +95,7 @@ describe('PdfDataExtractor', () => {
         extractor.extract({
           pdfPath: 'non-existent.pdf',
           schema,
-        })
+        }),
       ).rejects.toThrow();
     });
   });

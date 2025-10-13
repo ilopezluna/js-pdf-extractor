@@ -1,7 +1,12 @@
 import OpenAI from 'openai';
 import { parsePdfFromPath, parsePdfFromBuffer } from './pdf-parser.js';
 import { validateSchema, formatSchemaForOpenAI } from './schema-validator.js';
-import { ExtractorConfig, ExtractionOptions, ExtractionResult, PdfPageImage } from './types.js';
+import {
+  ExtractorConfig,
+  ExtractionOptions,
+  ExtractionResult,
+  PdfPageImage,
+} from './types.js';
 
 /**
  * Main class for extracting structured data from PDFs using OpenAI
@@ -31,7 +36,7 @@ export class PdfDataExtractor {
     // Set default model
     const defaultModel = config.model || 'gpt-4o-mini';
     this.model = defaultModel;
-    
+
     // Set specific models, falling back to the default model
     this.textModel = config.textModel || defaultModel;
     this.visionModel = config.visionModel || defaultModel;
@@ -57,14 +62,15 @@ export class PdfDataExtractor {
   private async extractFromText<T>(
     text: string,
     schema: any,
-    options: ExtractionOptions
+    options: ExtractionOptions,
   ): Promise<ExtractionResult<T>> {
     const completion = await this.client.chat.completions.create({
       model: this.textModel,
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful assistant that extracts structured data from text. Extract the requested information accurately from the provided text.',
+          content:
+            'You are a helpful assistant that extracts structured data from text. Extract the requested information accurately from the provided text.',
         },
         {
           role: 'user',
@@ -107,11 +113,13 @@ export class PdfDataExtractor {
   private async extractFromImages<T>(
     images: PdfPageImage[],
     schema: any,
-    options: ExtractionOptions
+    options: ExtractionOptions,
   ): Promise<ExtractionResult<T>> {
     // Verify vision is enabled
     if (this.config.visionEnabled === false) {
-      throw new Error('PDF contains no extractable text and vision mode is disabled');
+      throw new Error(
+        'PDF contains no extractable text and vision mode is disabled',
+      );
     }
 
     // Build vision API messages
@@ -137,7 +145,8 @@ export class PdfDataExtractor {
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful assistant that extracts structured data from documents. Extract the requested information accurately from the provided document images.',
+          content:
+            'You are a helpful assistant that extracts structured data from documents. Extract the requested information accurately from the provided document images.',
         },
         {
           role: 'user',
@@ -175,7 +184,9 @@ export class PdfDataExtractor {
    * @param options - Extraction options including schema and PDF source
    * @returns Extracted data matching the schema
    */
-  async extract<T = any>(options: ExtractionOptions): Promise<ExtractionResult<T>> {
+  async extract<T = any>(
+    options: ExtractionOptions,
+  ): Promise<ExtractionResult<T>> {
     // Validate inputs
     if (!options.pdfPath && !options.pdfBuffer) {
       throw new Error('Either pdfPath or pdfBuffer must be provided');
@@ -192,8 +203,12 @@ export class PdfDataExtractor {
 
     // Parse the PDF
     const parsedPdf = options.pdfPath
-      ? await parsePdfFromPath(options.pdfPath, { textThreshold: this.config.textThreshold })
-      : await parsePdfFromBuffer(options.pdfBuffer!, { textThreshold: this.config.textThreshold });
+      ? await parsePdfFromPath(options.pdfPath, {
+          textThreshold: this.config.textThreshold,
+        })
+      : await parsePdfFromBuffer(options.pdfBuffer!, {
+          textThreshold: this.config.textThreshold,
+        });
 
     // Format schema for OpenAI
     const formattedSchema = formatSchemaForOpenAI(options.schema);
@@ -202,10 +217,18 @@ export class PdfDataExtractor {
     try {
       if (parsedPdf.content.type === 'text') {
         // Extract from text content
-        return await this.extractFromText<T>(parsedPdf.content.content, formattedSchema, options);
+        return await this.extractFromText<T>(
+          parsedPdf.content.content,
+          formattedSchema,
+          options,
+        );
       } else {
         // Extract from images using vision API
-        return await this.extractFromImages<T>(parsedPdf.content.content, formattedSchema, options);
+        return await this.extractFromImages<T>(
+          parsedPdf.content.content,
+          formattedSchema,
+          options,
+        );
       }
     } catch (error) {
       console.error(error);

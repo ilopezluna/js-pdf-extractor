@@ -7,19 +7,19 @@ import { ParsedPdf, PdfPageImage } from './types.js';
  * @param pdfSource - Path to PDF or Buffer
  * @returns Array of page images as base64 strings
  */
-async function convertPdfToImages(pdfSource: string | Buffer): Promise<PdfPageImage[]> {
+async function convertPdfToImages(
+  pdfSource: string | Buffer,
+): Promise<PdfPageImage[]> {
   const parser = new PDFParse(
-    typeof pdfSource === 'string' 
-      ? { url: pdfSource }
-      : { data: pdfSource }
+    typeof pdfSource === 'string' ? { url: pdfSource } : { data: pdfSource },
   );
 
   try {
     // Use pdf-parse v2's built-in screenshot functionality
-    const result = await parser.getScreenshot({ 
+    const result = await parser.getScreenshot({
       scale: 3,
       imageDataUrl: true,
-      imageBuffer: false 
+      imageBuffer: false,
     });
 
     const images: PdfPageImage[] = result.pages.map((page) => ({
@@ -77,7 +77,7 @@ function hasExtractableText(text: string, threshold: number = 100): boolean {
  */
 export async function parsePdfFromPath(
   pdfPath: string,
-  options?: { textThreshold?: number }
+  options?: { textThreshold?: number },
 ): Promise<ParsedPdf> {
   try {
     const dataBuffer = await fs.promises.readFile(pdfPath);
@@ -98,7 +98,7 @@ export async function parsePdfFromPath(
  */
 export async function parsePdfFromBuffer(
   buffer: Buffer,
-  options?: { textThreshold?: number }
+  options?: { textThreshold?: number },
 ): Promise<ParsedPdf> {
   // Validate PDF signature before attempting to parse
   if (!isValidPdfSignature(buffer)) {
@@ -106,14 +106,14 @@ export async function parsePdfFromBuffer(
   }
 
   const parser = new PDFParse({ data: buffer });
-  
+
   try {
     const threshold = options?.textThreshold ?? 100;
-    
+
     // Extract text and info using pdf-parse v2
     const textResult = await parser.getText();
     const infoResult = await parser.getInfo();
-    
+
     // Check if PDF has extractable text
     if (hasExtractableText(textResult.text, threshold)) {
       return {
@@ -125,11 +125,11 @@ export async function parsePdfFromBuffer(
         info: infoResult.info,
       };
     }
-    
+
     // If no text, convert to images
     await parser.destroy(); // Clean up text parser before creating image parser
     const images = await convertPdfToImages(buffer);
-    
+
     return {
       content: {
         type: 'images',
