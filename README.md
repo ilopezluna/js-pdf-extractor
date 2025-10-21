@@ -1,6 +1,11 @@
 # PDF Data Extractor
 
+[![npm version](https://badge.fury.io/js/pdf-data-extractor.svg)](https://www.npmjs.com/package/pdf-data-extractor)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A TypeScript library to extract structured data from PDFs using JSON schemas and OpenAI API compatible models.
+
+**NPM Package:** https://www.npmjs.com/package/pdf-data-extractor
 
 ## Features
 
@@ -93,8 +98,10 @@ new PdfDataExtractor(config: ExtractorConfig)
 **Parameters:**
 
 - `config.openaiApiKey` (string, required): Your OpenAI API key
-- `config.model` (string, optional): Model to use (default: 'gpt-4o-mini')
-- `config.baseUrl` (string, optional): Custom OpenAI API base URL
+- `config.model` (string, optional): Default model to use for both text and vision extraction (default: 'gpt-4o-mini')
+- `config.textModel` (string, optional): Model to use specifically for text-based PDF extraction (overrides `model` for text)
+- `config.visionModel` (string, optional): Model to use specifically for vision-based PDF extraction (overrides `model` for vision)
+- `config.baseUrl` (string, optional): Custom OpenAI API base URL for OpenAI-compatible endpoints
 - `config.visionEnabled` (boolean, optional): Enable automatic vision-based OCR for scanned PDFs (default: true)
 - `config.textThreshold` (number, optional): Minimum text length to consider PDF as text-based (default: 100)
 - `config.systemPrompt` (string, optional): Custom system prompt for the AI model. Set to empty string for models that don't support system prompts (default: sensible prompt for data extraction)
@@ -131,6 +138,88 @@ const result = await extractor.extract({
 });
 ```
 
+##### getModel(): string
+
+Get the default model configured for the extractor.
+
+**Returns:** The model name
+
+##### getTextModel(): string
+
+Get the model being used for text-based PDF extraction.
+
+**Returns:** The text model name
+
+##### getVisionModel(): string
+
+Get the model being used for vision-based PDF extraction (OCR).
+
+**Returns:** The vision model name
+
+### Utility Functions
+
+The library also exports utility functions for advanced use cases:
+
+#### parsePdfFromPath(path: string, options?: ParseOptions): Promise<ParsedPdf>
+
+Parse a PDF file from a file path and extract its content.
+
+**Parameters:**
+
+- `path` (string, required): Path to the PDF file
+- `options.textThreshold` (number, optional): Minimum text length to consider PDF as text-based (default: 100)
+
+**Returns:** Promise resolving to a `ParsedPdf` object with content (text or images), page count, and metadata
+
+#### parsePdfFromBuffer(buffer: Buffer, options?: ParseOptions): Promise<ParsedPdf>
+
+Parse a PDF file from a Buffer and extract its content.
+
+**Parameters:**
+
+- `buffer` (Buffer, required): PDF file as a Buffer
+- `options.textThreshold` (number, optional): Minimum text length to consider PDF as text-based (default: 100)
+
+**Returns:** Promise resolving to a `ParsedPdf` object with content (text or images), page count, and metadata
+
+#### validateSchema(schema: any): void
+
+Validate a JSON schema for use with the extractor.
+
+**Parameters:**
+
+- `schema` (any, required): The JSON schema to validate
+
+**Throws:** Error if the schema is invalid
+
+**Example:**
+
+```typescript
+import {
+  parsePdfFromPath,
+  validateSchema,
+  PdfDataExtractor,
+} from 'pdf-data-extractor';
+
+// Parse a PDF independently
+const parsedPdf = await parsePdfFromPath('./document.pdf');
+console.log(`Pages: ${parsedPdf.numPages}`);
+console.log(`Content type: ${parsedPdf.content.type}`);
+
+// Validate a schema before using it
+const schema = {
+  title: { type: 'string' },
+  amount: { type: 'number' },
+};
+
+try {
+  validateSchema(schema);
+  console.log('Schema is valid!');
+} catch (error) {
+  console.error('Invalid schema:', error.message);
+}
+```
+
 ## Scanned PDF Support
 
 This library automatically detects and handles scanned PDFs (documents that are images) using AI vision models. When a PDF contains insufficient extractable text, it automatically:
@@ -161,19 +250,14 @@ const result = await extractor.extract({
 
 ### Using Different Models for Text and Vision
 
-You can configure separate models for text-based and scanned PDF extraction:
+You can configure separate models for text-based and scanned PDF extraction by specifying `textModel` and `visionModel` in the constructor:
 
 ```typescript
 const extractor = new PdfDataExtractor({
   openaiApiKey: 'your-api-key',
-  model: 'gpt-4o-mini', // Default for both
+  textModel: 'gpt-4o-mini', // Cheaper model for text-based PDFs
+  visionModel: 'gpt-4o', // More accurate model for scanned PDFs
 });
-
-// Use a cheaper model for text extraction
-extractor.setTextModel('gpt-4o-mini');
-
-// Use a more accurate model for vision/scanned PDFs
-extractor.setVisionModel('gpt-4o');
 
 // Now text-based PDFs use gpt-4o-mini (cost-effective)
 // and scanned PDFs use gpt-4o (better accuracy)
@@ -184,6 +268,8 @@ const result = await extractor.extract({
   },
 });
 ```
+
+**Note:** If only `model` is specified without `textModel` or `visionModel`, that model will be used for both text and vision extraction.
 
 See [Usage](USAGE.md) for more examples.
 
