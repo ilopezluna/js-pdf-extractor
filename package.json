@@ -1,6 +1,6 @@
 {
   "name": "pdf-data-extractor",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "A TypeScript library to extract structured data from PDFs using JSON schemas and OpenAI API compatible models.",
   "type": "module",
   "main": "dist/index.js",
